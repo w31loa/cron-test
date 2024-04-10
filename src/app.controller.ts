@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, ParseIntPipe, Post } from '@nestjs/common';
+import { Body, Controller, Get, Param, ParseIntPipe, Patch, Post } from '@nestjs/common';
 import { CronService } from './cron/cron.service';
 
 
@@ -12,6 +12,15 @@ export class AppController {
   createCronJob(@Body() data) {
     return this.cron.createCron(data.date , data.id);
   }
+
+
+  
+  @Patch()
+  updateCronJob(@Body() data) {
+    return this.cron.updateCron(data.date , data.id);
+  }
+
+
 
   // чето такое принимает
   // {
