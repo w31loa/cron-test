@@ -1,5 +1,5 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
-import { SchedulerRegistry } from '@nestjs/schedule';
+import { Cron, SchedulerRegistry } from '@nestjs/schedule';
 import { CronJob, CronTime } from 'cron';
 import * as moment from 'moment';
 import { PrismaService } from 'src/prisma/prisma.service';
@@ -46,11 +46,23 @@ export class CronService implements OnModuleInit {
     async updateCron(expressionDate:Date , orderId:number){
         const date = new Date(expressionDate);
         const parsedDate = parseDate(date)
-        const cronExpression = `${parsedDate.minutes} ${parsedDate.hours} ${parsedDate.day} ${parsedDate.month} *`;
+
+
+        const cronExpression = `* ${parsedDate.minutes} ${parsedDate.hours} ${parsedDate.day} ${parsedDate.month} *`;
+
+
         const cronTime = new CronTime(cronExpression)
         const currentCron = this.schedulerRegistry.getCronJob(`${orderId}`)
-        //@ts-ignore
         currentCron.setTime(cronTime)
+
+        await this.prisma.cron.update({
+            where: {
+                orderId
+            },
+            data:{
+                expressionDate:expressionDate
+            }
+        })
 
         console.log(`CronJob for order with id: ${orderId} is updated  for this time:   ${parsedDate.day}.${parsedDate.month}.${parsedDate.year} ${parsedDate.hours}:${parsedDate.minutes} `)
 
@@ -86,11 +98,13 @@ export class CronService implements OnModuleInit {
                 }
             })
 
-            console.log('job done')
-        })
+            console.log(`job for order with id ${orderId} done `)
+            job.stop()
+            this.schedulerRegistry.deleteCronJob(String(orderId))
+        }) 
 
-
-        //@ts-ignore
+        job.cronTime
+        
         this.schedulerRegistry.addCronJob(String(orderId), job)
 
 
